@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trading Dashboard - Sinyal Aktif</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --text-color: #f8fafc;
+            --card-bg: #1e293b;
+            --buy-color: #22c55e;
+            --sell-color: #ef4444;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 2rem;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 2rem;
+            font-weight: 600;
+            letter-spacing: -0.025em;
+        }
+        /* Bento Grid UI Design */
+        .bento-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.5rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .signal-card {
+            background-color: var(--card-bg);
+            border-radius: 20px;
+            padding: 1.5rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            transition: transform 0.2s;
+        }
+        .signal-card:hover {
+            transform: translateY(-5px);
+        }
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.875rem;
+            color: #94a3b8;
+        }
+        .badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-weight: bold;
+            font-size: 0.75rem;
+            color: #fff;
+        }
+        .badge.BUY { background-color: var(--buy-color); }
+        .badge.SELL { background-color: var(--sell-color); }
+        .price-row {
+            display: flex;
+            justify-content: space-between;
+            border-bottom: 1px solid #334155;
+            padding-bottom: 0.5rem;
+        }
+        .price-row:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+        .price-label { color: #cbd5e1; font-size: 0.875rem; }
+        .price-value { font-weight: 600; font-family: monospace; font-size: 1.1rem; }
+        
+        .empty-state {
+            text-align: center;
+            grid-column: 1 / -1;
+            padding: 4rem;
+            color: #64748b;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Dashboard Sinyal XAU/USD</h1>
+    <div class="bento-grid" id="grid-container">
+        <!-- Data akan dirender di sini oleh JavaScript -->
+        <div class="empty-state">Memuat data dari server...</div>
+    </div>
+
+    <script>
+        // GANTI URL INI DENGAN URL BACKEND RENDER ANDA NANTI
+        const API_URL = 'https://api-backend-anda.onrender.com/api/signals';
+        const gridContainer = document.getElementById('grid-container');
+
+        async function fetchSignals() {
+            try {
+                const response = await fetch(API_URL);
+                const data = await response.json();
+                renderSignals(data);
+            } catch (error) {
+                console.error('Error fetching data:', error);
+                gridContainer.innerHTML = `<div class="empty-state">Koneksi ke server terputus. Mengulang...</div>`;
+            }
+        }
+
+        function renderSignals(signals) {
+            gridContainer.innerHTML = ''; // Bersihkan layar
+
+            if (signals.length === 0) {
+                gridContainer.innerHTML = `<div class="empty-state">Tidak ada posisi aktif saat ini. Menunggu sinyal...</div>`;
+                return;
+            }
+
+            signals.forEach(signal => {
+                const isBuy = signal.signal_type === 'BUY';
+                const card = document.createElement('div');
+                card.className = 'signal-card';
+                
+                // Format ID untuk menghilangkan prefix string yang terlalu panjang
+                const displayId = signal.id.split('_')[1] || signal.id;
+
+                card.innerHTML = `
+                    <div class="card-header">
+                        <span>ID: ${displayId}</span>
+                        <span class="badge ${signal.signal_type}">${signal.signal_type}</span>
+                    </div>
+                    <div class="price-row">
+                        <span class="price-label">Entry Price</span>
+                        <span class="price-value" style="color: ${isBuy ? 'var(--buy-color)' : 'var(--sell-color)'}">
+                            ${parseFloat(signal.entry_price).toFixed(2)}
+                        </span>
+                    </div>
+                    <div class="price-row">
+                        <span class="price-label">Take Profit (TP)</span>
+                        <span class="price-value" style="color: #38bdf8">
+                            ${parseFloat(signal.tp_price).toFixed(2)}
+                        </span>
+                    </div>
+                `;
+                gridContainer.appendChild(card);
+            });
+        }
+
+        // Jalankan fetch pertama kali saat web dibuka
+        fetchSignals();
+
+        // Fitur Auto-Update: Website akan me-refresh data tanpa reload layar setiap 3 detik
+        setInterval(fetchSignals, 3000);
+    </script>
+</body>
+</html>
