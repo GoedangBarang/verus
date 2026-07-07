@@ -87,7 +87,6 @@
 
     <h1>🍀🍀🍀🍀🍀🍀🍀🍀🍀🍀🍀🍀🍀🍀🍀🍀🍀🍀🍀🍀🍀🍀🍀</h1>
     <div class="bento-grid" id="grid-container">
-        <!-- Data akan dirender di sini oleh JavaScript -->
         <div class="empty-state">Memuat data dari server...</div>
     </div>
 
@@ -138,6 +137,12 @@
                         <span class="price-label">Take Profit (TP)</span>
                         <span class="price-value" style="color: #38bdf8">
                             ${parseFloat(signal.tp_price).toFixed(2)}
+                        </span>
+                    </div>
+                    <div class="price-row">
+                        <span class="price-label">Stop Loss (SL)</span>
+                        <span class="price-value" style="color: var(--sell-color)">
+                            ${parseFloat(signal.sl_price).toFixed(2)}
                         </span>
                     </div>
                 `;
