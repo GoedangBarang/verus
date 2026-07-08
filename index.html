@@ -6,71 +6,186 @@
     <title>Trading Dashboard - Sinyal Aktif</title>
     <style>
         :root {
-            --bg-color: #0f172a;
-            --text-color: #f8fafc;
-            --card-bg: #1e293b;
-            --buy-color: #22c55e;
-            --sell-color: #ef4444;
+            --bg-color: #0F172A; /* Slate 900 */
+            --card-bg: #1E293B; /* Slate 800 */
+            --text-main: #F8FAFC; /* Slate 50 */
+            --text-muted: #94A3B8; /* Slate 400 */
+            --buy-color: #10B981; /* Emerald 500 */
+            --sell-color: #EF4444; /* Red 500 */
+            --border-color: #334155; /* Slate 700 */
         }
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background-color: var(--bg-color); color: var(--text-color); margin: 0; padding: 2rem; }
-        h1 { text-align: center; margin-bottom: 2rem; }
-        .bento-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem; max-width: 1200px; margin: 0 auto; }
-        .signal-card { background-color: var(--card-bg); border-radius: 20px; padding: 1.5rem; display: flex; flex-direction: column; gap: 0.75rem; border: 1px solid transparent; }
-        /* Style khusus jika TP sudah tersentuh */
-        .signal-card.tp-done { opacity: 0.7; border: 1px solid var(--buy-color); }
-        .card-header { display: flex; justify-content: space-between; align-items: center; font-size: 0.875rem; color: #94a3b8; }
-        .badge { padding: 0.25rem 0.75rem; border-radius: 9999px; font-weight: bold; font-size: 0.75rem; color: #fff; }
-        .badge.BUY { background-color: var(--buy-color); }
-        .badge.SELL { background-color: var(--sell-color); }
-        .price-row { display: flex; justify-content: space-between; border-bottom: 1px solid #334155; padding-bottom: 0.5rem; }
-        .price-label { color: #cbd5e1; font-size: 0.875rem; }
-        .price-value { font-weight: 600; font-family: monospace; font-size: 1.1rem; }
-        .empty-state { text-align: center; grid-column: 1 / -1; padding: 4rem; color: #64748b; }
-        
-        .tp-hit-msg { margin-top: 10px; padding: 10px; background: rgba(34, 197, 94, 0.2); color: #4ade80; border-radius: 8px; text-align: center; font-weight: bold; font-size: 0.9rem; }
-        .btn-hapus { margin-top: 10px; padding: 10px; background: #334155; color: white; border: none; border-radius: 8px; cursor: pointer; transition: 0.2s; font-weight: bold; }
-        .btn-hapus:hover { background: #ef4444; }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2rem;
+            color: var(--text-main);
+        }
+
+        /* BENTO GRID LAYOUT */
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .signal-card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .signal-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2);
+        }
+
+        /* CARD HEADER (JAM & BADGE) */
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 12px;
+            margin-bottom: 8px;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        .badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .badge.BUY {
+            background-color: rgba(16, 185, 129, 0.2);
+            color: var(--buy-color);
+            border: 1px solid var(--buy-color);
+        }
+
+        .badge.SELL {
+            background-color: rgba(239, 68, 68, 0.2);
+            color: var(--sell-color);
+            border: 1px solid var(--sell-color);
+        }
+
+        /* CARD BODY (HARGA) */
+        .price-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 1rem;
+            align-items: center;
+        }
+
+        .price-label {
+            color: var(--text-muted);
+        }
+
+        .price-value {
+            font-family: 'Courier New', Courier, monospace;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        .price-value.buy-text { color: var(--buy-color); }
+        .price-value.sell-text { color: var(--sell-color); }
+
+        /* STATUS TP HIT */
+        .tp-done {
+            border-color: var(--buy-color);
+            background-image: linear-gradient(to bottom right, var(--card-bg), rgba(16, 185, 129, 0.05));
+        }
+
+        .tp-hit-msg {
+            background-color: rgba(16, 185, 129, 0.1);
+            color: var(--buy-color);
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 0.9rem;
+            margin-top: 5px;
+            margin-bottom: 5px;
+            border: 1px dashed var(--buy-color);
+        }
+
+        /* TOMBOL HAPUS */
+        .delete-btn {
+            margin-top: auto;
+            background-color: transparent;
+            color: var(--text-muted);
+            border: 1px solid var(--border-color);
+            padding: 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+
+        .delete-btn:hover {
+            background-color: rgba(239, 68, 68, 0.1);
+            color: var(--sell-color);
+            border-color: var(--sell-color);
+        }
+
+        .empty-state {
+            grid-column: 1 / -1;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 1.2rem;
+            padding: 50px;
+        }
     </style>
 </head>
 <body>
 
     <h1>🍀 Sinyal Trading Aktif 🍀</h1>
-    <div class="bento-grid" id="grid-container">
-        <div class="empty-state">Memuat data dari server...</div>
+    <div class="grid-container" id="signalGrid">
+        <div class="empty-state">Memuat data...</div>
     </div>
 
     <script>
-        // GANTI URL INI DENGAN URL BACKEND RENDER ANDA NANTI
+        // GANTI DENGAN URL RENDER ANDA JIKA BERBEDA
         const API_URL = 'https://rusuh.onrender.com/api/signals';
         const WEBHOOK_URL = 'https://rusuh.onrender.com/api/webhook';
-        const gridContainer = document.getElementById('grid-container');
 
         async function fetchSignals() {
             try {
                 const response = await fetch(API_URL);
-                const data = await response.json();
-                renderSignals(data);
+                const signals = await response.json();
+                renderSignals(signals);
             } catch (error) {
-                console.error('Error fetching data:', error);
-            }
-        }
-
-        // Fungsi Tombol Hapus Manual
-        async function hapusManual(id) {
-            if(confirm("Yakin ingin menghapus sinyal ini dari website?")) {
-                await fetch(WEBHOOK_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ action: "delete_signal", id: id })
-                });
-                fetchSignals(); // Refresh layar instan
+                console.error("Gagal mengambil data:", error);
+                document.getElementById('signalGrid').innerHTML = '<div class="empty-state">Gagal terhubung ke server.</div>';
             }
         }
 
         function renderSignals(signals) {
-            gridContainer.innerHTML = ''; 
+            const grid = document.getElementById('signalGrid');
+            grid.innerHTML = '';
+
             if (signals.length === 0) {
-                gridContainer.innerHTML = `<div class="empty-state">Tidak ada sinyal saat ini.</div>`;
+                grid.innerHTML = '<div class="empty-state">Tidak ada sinyal saat ini.</div>';
                 return;
             }
 
@@ -79,37 +194,86 @@
                 const card = document.createElement('div');
                 card.className = `signal-card ${signal.is_tp_hit ? 'tp-done' : ''}`;
                 
-                // Menampilkan Keterangan TP Tersentuh jika is_tp_hit == true
+                // MENGUBAH ID "2026-07-08_14-30_BUY" MENJADI WAKTU YANG CANTIK
+                const parts = signal.id.split('_');
+                let displayTime = signal.id;
+                
+                if (parts.length >= 2) {
+                    const dateStr = parts[0].split('-'); // Memecah [2026, 07, 08]
+                    const timeStr = parts[1].replace('-', ':'); // Mengubah 14-30 jadi 14:30
+                    if (dateStr.length === 3) {
+                        displayTime = `${dateStr[2]}/${dateStr[1]}/${dateStr[0]} ${timeStr}`;
+                    }
+                }
+
+                // Pesan khusus jika TP tersentuh
                 const tpStatusHtml = signal.is_tp_hit 
                     ? `<div class="tp-hit-msg">✅ TP Sudah Disentuh<br/>di harga: ${parseFloat(signal.tp_price).toFixed(2)}</div>` 
                     : '';
 
                 card.innerHTML = `
                     <div class="card-header">
-                        <span>${signal.id}</span>
+                        <span>🕒 ${displayTime}</span>
                         <span class="badge ${signal.signal_type}">${signal.signal_type}</span>
                     </div>
+                    
+                    ${tpStatusHtml}
+
                     <div class="price-row">
                         <span class="price-label">Entry Price</span>
-                        <span class="price-value" style="color: ${isBuy ? 'var(--buy-color)' : 'var(--sell-color)'}">${parseFloat(signal.entry_price).toFixed(2)}</span>
+                        <span class="price-value ${isBuy ? 'buy-text' : 'sell-text'}">
+                            ${parseFloat(signal.entry_price).toFixed(2)}
+                        </span>
                     </div>
                     <div class="price-row">
                         <span class="price-label">Take Profit (TP)</span>
-                        <span class="price-value" style="color: #38bdf8">${parseFloat(signal.tp_price).toFixed(2)}</span>
+                        <span class="price-value" style="color: #3B82F6;">
+                            ${parseFloat(signal.tp_price).toFixed(2)}
+                        </span>
                     </div>
                     <div class="price-row">
                         <span class="price-label">Stop Loss (SL)</span>
-                        <span class="price-value" style="color: var(--sell-color)">${parseFloat(signal.sl_price).toFixed(2)}</span>
+                        <span class="price-value" style="color: #F97316;">
+                            ${parseFloat(signal.sl_price).toFixed(2)}
+                        </span>
                     </div>
-                    ${tpStatusHtml}
-                    <button class="btn-hapus" onclick="hapusManual('${signal.id}')">🗑️ Hapus Manual</button>
+                    
+                    <button class="delete-btn" onclick="hapusSinyal('${signal.id}')">🗑️ Hapus Manual</button>
                 `;
-                gridContainer.appendChild(card);
+                
+                grid.appendChild(card);
             });
         }
 
+        async function hapusSinyal(id) {
+            // Konfirmasi sebelum menghapus
+            if (!confirm(`Apakah Anda yakin ingin menghapus sinyal ini?`)) return;
+
+            try {
+                const response = await fetch(WEBHOOK_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: "delete_signal",
+                        id: id
+                    })
+                });
+
+                if (response.ok) {
+                    fetchSignals(); // Refresh data otomatis setelah dihapus
+                } else {
+                    alert("Gagal menghapus sinyal.");
+                }
+            } catch (error) {
+                alert("Terjadi kesalahan saat menghapus data.");
+            }
+        }
+
+        // Panggil fungsi pertama kali saat web dibuka
         fetchSignals();
-        setInterval(fetchSignals, 3000);
+
+        // Refresh data otomatis setiap 5 detik
+        setInterval(fetchSignals, 5000);
     </script>
 </body>
 </html>
