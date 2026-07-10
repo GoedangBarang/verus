@@ -61,7 +61,6 @@
             color: white;
         }
 
-        /* TOMBOL NOTIFIKASI BARU */
         .notify-btn {
             background-color: rgba(59, 130, 246, 0.1);
             color: #3B82F6;
@@ -207,47 +206,49 @@
             'Content-Type': 'application/json'
         };
 
-        // ==========================================
-        // SISTEM MEMORI & NOTIFIKASI
-        // ==========================================
         let isFirstLoad = true;
-        const memorySinyal = new Map(); // Menyimpan data untuk perbandingan
+        const memorySinyal = new Map();
         let notifAktif = false;
 
         function bunyikanBeep() {
             if (!notifAktif) return;
             try {
-                // Menggunakan Web Audio API untuk membuat suara tanpa file MP3 eksternal
                 const ctx = new (window.AudioContext || window.webkitAudioContext)();
                 const osc = ctx.createOscillator();
                 const gainNode = ctx.createGain();
                 
                 osc.type = 'sine';
-                osc.frequency.setValueAtTime(880, ctx.currentTime); // Nada tinggi
-                gainNode.gain.setValueAtTime(0.1, ctx.currentTime); // Volume
+                osc.frequency.setValueAtTime(880, ctx.currentTime);
+                gainNode.gain.setValueAtTime(0.1, ctx.currentTime);
                 
                 osc.connect(gainNode);
                 gainNode.connect(ctx.destination);
                 
                 osc.start();
-                osc.stop(ctx.currentTime + 0.3); // Bunyi selama 0.3 detik
+                osc.stop(ctx.currentTime + 0.3);
             } catch (e) {
                 console.error("Gagal memutar suara:", e);
             }
         }
 
+        // ==========================================
+        // FUNGSI NOTIFIKASI YANG DIBUAT BANDEL (TIDAK HILANG)
+        // ==========================================
         function kirimNotif(judul, pesan) {
             if (!notifAktif || Notification.permission !== "granted") return;
             
             bunyikanBeep();
             
-            // Memunculkan popup Android/Windows
             const notif = new Notification(judul, {
                 body: pesan,
-                icon: "https://cdn-icons-png.flaticon.com/512/2933/2933116.png" // Ikon lonceng
+                icon: "https://cdn-icons-png.flaticon.com/512/2933/2933116.png",
+                
+                // INI KUNCI RAHASIANYA:
+                // Notifikasi akan terus nongkrong di layar komputer/HP Anda sampai 
+                // Anda benar-benar mengeklik tombol 'X' (Tutup) atau membukanya.
+                requireInteraction: true 
             });
 
-            // Jika notifikasi diklik, buka kembali tab Vercel Anda
             notif.onclick = function() {
                 window.focus();
                 notif.close();
@@ -256,11 +257,10 @@
 
         async function aktifkanNotifikasi() {
             if (!("Notification" in window)) {
-                alert("Browser HP Anda tidak mendukung fitur Notifikasi Web.");
+                alert("Browser ini tidak mendukung fitur Notifikasi Web.");
                 return;
             }
 
-            // Meminta izin ke pengguna
             const permission = await Notification.requestPermission();
             const btn = document.getElementById('notifyBtn');
 
@@ -268,16 +268,13 @@
                 notifAktif = true;
                 btn.innerText = "✅ Notifikasi Aktif";
                 btn.classList.add("active");
-                bunyikanBeep(); // Tes suara
-                alert("Notifikasi berhasil diaktifkan! Anda bisa minimize Chrome sekarang.");
+                bunyikanBeep();
+                alert("Sip! Notifikasi sekarang akan menempel di layar sampai Anda menutupnya.");
             } else {
                 alert("Izin notifikasi ditolak. Silakan izinkan di setelan browser.");
             }
         }
 
-        // ==========================================
-        // LOGIKA PENARIKAN DATA (FETCH)
-        // ==========================================
         async function fetchSignals() {
             try {
                 const response = await fetch(`${API_ENDPOINT}?select=*&order=id.desc&limit=50`, {
@@ -289,20 +286,15 @@
                 
                 const signals = await response.json();
                 
-                // CEK PERUBAHAN UNTUK NOTIFIKASI
                 if (isFirstLoad) {
-                    // Jika baru buka web, simpan semua data ke memori diam-diam
                     signals.forEach(s => memorySinyal.set(s.id, s.is_tp_hit));
                     isFirstLoad = false;
                 } else {
-                    // Jika ini refresh ke-2 dst, bandingkan data baru vs data di memori
                     signals.forEach(s => {
                         if (!memorySinyal.has(s.id)) {
-                            // ADA SINYAL BARU!
                             memorySinyal.set(s.id, s.is_tp_hit);
                             kirimNotif(`🚨 Sinyal Baru: ${s.signal_type}`, `Entry: ${s.entry_price} | TP: ${s.tp_price}`);
                         } else if (memorySinyal.get(s.id) === false && s.is_tp_hit === true) {
-                            // ADA STATUS TP YANG BERUBAH!
                             memorySinyal.set(s.id, true);
                             kirimNotif(`🎯 TP TERSENTUH!`, `Sinyal ${s.signal_type} baru saja menyentuh Take Profit di ${s.tp_price}`);
                         }
@@ -383,7 +375,7 @@
             try {
                 const response = await fetch(`${API_ENDPOINT}?id=eq.${id}`, { method: 'DELETE', headers: reqHeaders });
                 if (response.ok) {
-                    memorySinyal.delete(id); // Hapus dari memori juga
+                    memorySinyal.delete(id); 
                     fetchSignals();
                 } else alert("Gagal menghapus sinyal.");
             } catch (error) {
@@ -397,7 +389,7 @@
             try {
                 const response = await fetch(`${API_ENDPOINT}?id=not.is.null`, { method: 'DELETE', headers: reqHeaders });
                 if (response.ok) {
-                    memorySinyal.clear(); // Bersihkan memori total
+                    memorySinyal.clear(); 
                     fetchSignals(); 
                 } else alert("Gagal membersihkan database.");
             } catch (error) {
@@ -406,7 +398,7 @@
         }
 
         fetchSignals();
-        setInterval(fetchSignals, 5000); // Mengecek database setiap 5 detik
+        setInterval(fetchSignals, 5000); 
     </script>
 </body>
 </html>
